@@ -111,6 +111,32 @@ def test_pairwise_signal_clamps_negative_cosine():
     assert opposite == orthogonal
 
 
+def test_campaign_metrics_discovery_one_cluster_matches_at_most_one_campaign():
+    # One flagged cluster fully overlaps TWO ground-truth campaigns (e.g. a
+    # merged cluster spanning both). Without one-to-one assignment, the same
+    # cluster gets credited to both campaigns (recall inflated) while still
+    # counting as a single matched cluster (false_clusters deflated) - an
+    # inconsistent accounting. With greedy one-to-one assignment, only ONE
+    # campaign is recovered and the other is a miss.
+    ds = Dataset(
+        posts=[
+            _p("C0", "x", "u0", "2026-01-01T00:00:00", "CAMP-1"),
+            _p("C1", "x", "u1", "2026-01-01T00:01:00", "CAMP-1"),
+            _p("C2", "x", "u2", "2026-01-01T00:02:00", "CAMP-2"),
+            _p("C3", "x", "u3", "2026-01-01T00:03:00", "CAMP-2"),
+        ]
+    )
+    # A single flagged cluster spans all four posts (both campaigns).
+    clusters = [Cluster(post_ids=("C0", "C1", "C2", "C3"), score=0.9, flagged=True)]
+    m = campaign_metrics_discovery(clusters, ds, overlap=0.5)
+    # Exactly one of the two campaigns is recovered - not both.
+    assert m["recall"] == 0.5
+    assert m["n_campaigns"] == 2.0
+    # The single flagged cluster was consumed by the one match it counted
+    # toward recall; it must not ALSO be double-counted as a false cluster.
+    assert m["false_clusters"] == 0.0
+
+
 def test_campaign_metrics_discovery_recovers_campaign():
     ds = Dataset(
         posts=[

@@ -56,6 +56,38 @@ def test_malformed_lines_skipped_not_silent(tmp_path, caplog):
     assert any("dropped" in r.message.lower() for r in caplog.records)
 
 
+def test_io_record_missing_campaign_id_key_is_dropped_not_silent(tmp_path, caplog):
+    # An io (synthetic) record is documented to always carry a campaign_id
+    # key (value may be a string; never simply absent). A record missing the
+    # key entirely is a schema violation and must be logged + dropped like
+    # any other malformed record - not silently treated as campaign_id=None.
+    rows_text = "\n".join([
+        json.dumps({"text": "ok", "author_id": "a", "timestamp": "2026-01-01T00:00:00",
+                    "label": "io", "campaign_id": "C1"}),
+        json.dumps({"text": "no campaign key", "author_id": "b",
+                    "timestamp": "2026-01-01T00:00:00", "label": "io"}),
+    ])
+    p = tmp_path / "rw.jsonl"
+    p.write_text(rows_text, encoding="utf-8")
+    import logging
+    with caplog.at_level(logging.WARNING):
+        ds = load_realworld(str(p))
+    assert len(ds.posts) == 1  # only the valid io row survives
+    assert ds.posts[0].campaign_id == "C1"
+    assert any("dropped" in r.message.lower() for r in caplog.records)
+
+
+def test_control_record_missing_campaign_id_key_is_not_dropped(tmp_path):
+    # Controls are documented as forced to null regardless; a missing key on
+    # a control row is not a schema violation (the field is meaningless for
+    # controls), so it should still load with campaign_id=None.
+    rows = [{"text": "x", "author_id": "b", "timestamp": "2026-01-01T00:00:00",
+             "label": "control"}]
+    ds = load_realworld(_write_jsonl(tmp_path, rows))
+    assert len(ds.posts) == 1
+    assert ds.posts[0].campaign_id is None
+
+
 def test_deterministic(tmp_path):
     rows = [{"text": f"t{i}", "author_id": f"a{i}", "timestamp": "2026-01-01T00:00:00",
              "label": "io", "campaign_id": "C1"} for i in range(3)]

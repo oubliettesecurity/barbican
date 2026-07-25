@@ -32,6 +32,13 @@ def load_realworld(path: str | None) -> Dataset | None:
         try:
             rec = json.loads(line)
             label = _LABEL_MAP[rec["label"]]
+            # The documented schema (README "Real-world validation") requires the
+            # campaign_id KEY on every record - null is a valid value for controls,
+            # but a MISSING key on an io record is a schema violation, not "no
+            # campaign". Treat it like any other malformed record: log + drop,
+            # never silently coerce to None.
+            if label == "synthetic" and "campaign_id" not in rec:
+                raise KeyError("campaign_id")
             campaign_id = rec.get("campaign_id") if label == "synthetic" else None
             posts.append(
                 Post(

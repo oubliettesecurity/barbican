@@ -106,12 +106,17 @@ def campaign_metrics_discovery(
     campaigns = ds.campaigns()  # {campaign_id: [Post, ...]} for synthetic campaigns
     flagged = [set(c.post_ids) for c in clusters if c.flagged]
     recovered = 0
-    matched_flagged = set()
+    matched_flagged: set[int] = set()
+    # Greedy one-to-one assignment: a flagged cluster already credited to one
+    # campaign cannot also be credited to another, so recall and
+    # false_clusters stay consistent (each cluster counts at most once).
     for _cid, members in campaigns.items():
         truth = {p.post_id for p in members}
         best = -1
         best_i = None
         for i, fset in enumerate(flagged):
+            if i in matched_flagged:
+                continue
             hit = len(truth & fset)
             if hit > best:
                 best, best_i = hit, i
