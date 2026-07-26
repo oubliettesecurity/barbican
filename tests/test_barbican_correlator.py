@@ -36,6 +36,41 @@ def test_pairwise_signal_high_for_coordinated_pair():
     assert s > 0.8
 
 
+def test_narrative_embed_weight_is_configurable():
+    # Default (0.5/0.5): embed cosine and ngram jaccard contribute equally.
+    # A non-default weight must shift the narrative term toward whichever
+    # sub-signal it favors, instead of the 0.5/0.5 split being hard-coded.
+    a = _post("A", "completely different phrasing entirely", "u1", "2026-01-01T00:00:00")
+    b = _post("B", "totally unrelated wording altogether", "u2", "2026-01-01T00:00:00")
+    ei, ej = [1.0, 0.0], [1.0, 0.0]  # cosine = 1.0 (perfect embed match)
+    # ngram_jaccard(a.text, b.text, 3) is low (near-disjoint character trigrams)
+    low_ngram = ngram_jaccard(a.text, b.text, 3)
+    assert low_ngram < 0.3
+
+    cfg_default = CorrelatorConfig()
+    cfg_embed_heavy = CorrelatorConfig(narrative_embed_weight=1.0)
+    cfg_ngram_heavy = CorrelatorConfig(narrative_embed_weight=0.0)
+
+    s_default = pairwise_signal(a, b, ei, ej, cfg_default)
+    s_embed_heavy = pairwise_signal(a, b, ei, ej, cfg_embed_heavy)
+    s_ngram_heavy = pairwise_signal(a, b, ei, ej, cfg_ngram_heavy)
+
+    # Embed-heavy (weight=1.0) ignores the low ngram score -> higher signal.
+    assert s_embed_heavy > s_default
+    # Ngram-heavy (weight=0.0) ignores the perfect cosine -> lower signal.
+    assert s_ngram_heavy < s_default
+
+
+def test_narrative_embed_weight_default_preserves_prior_behavior():
+    # Default must reproduce the old hard-coded 0.5*cosine + 0.5*ngram split.
+    cfg = CorrelatorConfig()
+    assert cfg.narrative_embed_weight == 0.5
+    a = _post("A", "buy now this token moons soon", "u1", "2026-01-01T00:00:00")
+    b = _post("B", "buy now this token moons soon", "u2", "2026-01-01T00:01:00")
+    s = pairwise_signal(a, b, [1.0, 0.0, 0.0], [1.0, 0.0, 0.0], cfg)
+    assert s > 0.8
+
+
 def test_pairwise_signal_low_for_unrelated_pair():
     cfg = CorrelatorConfig()
     a = _post("A", "the weather is nice in spring", "u1", "2026-01-01T00:00:00")

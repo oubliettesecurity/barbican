@@ -22,6 +22,7 @@ class CorrelatorConfig:
     temporal_weight: float = 0.25
     persona_weight: float = 0.25
     ngram_n: int = 3
+    narrative_embed_weight: float = 0.5
 
 
 def _char_ngrams(text: str, n: int) -> set[str]:
@@ -66,7 +67,10 @@ def pairwise_signal(
     # Real embeddings can yield negative cosine; clamp the narrative similarity
     # contribution to be non-negative so anti-correlated vectors cannot subtract
     # from the (non-negative) ngram/temporal/persona coordination evidence.
-    narrative = 0.5 * max(0.0, cosine(ei, ej)) + 0.5 * ngram_jaccard(pi.text, pj.text, cfg.ngram_n)
+    embed_weight = cfg.narrative_embed_weight
+    narrative = embed_weight * max(0.0, cosine(ei, ej)) + (1 - embed_weight) * ngram_jaccard(
+        pi.text, pj.text, cfg.ngram_n
+    )
     temporal = temporal_proximity(pi.timestamp, pj.timestamp, cfg.time_window_seconds)
     persona = persona_sim(pi.text, pj.text)
     total_w = cfg.narrative_weight + cfg.temporal_weight + cfg.persona_weight
