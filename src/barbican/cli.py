@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import IO, Any
 
 from .correlator import Cluster, CorrelatorConfig, discover
-from .embed import OllamaEmbedder
+from .embed import EmbeddingFn, OllamaEmbedder
 from .types import Dataset, Post
 
 #: Fields every record must carry. `campaign_id`, `label` and `backend_model`
@@ -102,7 +102,7 @@ def config_from(args: argparse.Namespace) -> CorrelatorConfig:
     )
 
 
-def _embedder(args: argparse.Namespace):
+def _embedder(args: argparse.Namespace) -> EmbeddingFn:
     if args.embed == "ollama":
         return OllamaEmbedder(model=args.embed_model, host=args.embed_host)
     return _zero_embedder
