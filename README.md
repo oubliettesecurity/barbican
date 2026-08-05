@@ -9,8 +9,61 @@ library only). The content-scanner signals it relies on are vendored into
 `barbican._scanners`, so importing `barbican` never loads any other Oubliette
 package.
 
+## Quickstart
+
+Point it at a file of posts and ask whether anything in it is coordinated:
+
+```bash
+pip install oubliette-barbican
+barbican detect -i corpus.jsonl
+```
+
+```
+Examined 7 posts (embeddings: none).
+Thresholds: edge=0.6 coord=0.6 window=3600s
+
+1 coordinated cluster(s):
+
+  [1] 4 posts, score 0.795
+      c1         a1         2026-01-01T10:00:00Z
+                 The new port authority ruling is a disaster for working families ever...
+      ...
+
+Score is coordination evidence, not proof of inauthenticity: quotation,
+syndication and genuine consensus also cluster.
+```
+
+**No network by default.** The correlator blends an embedding signal with
+n-gram, temporal and persona signals; with embeddings off the embedder is never
+consulted, so `detect` runs on a disconnected host using the standard library
+alone. `--embed ollama` opts in to a local model server and buys paraphrase
+robustness.
+
+Input is JSONL, one post per line. `post_id`, `text`, `author_id` and
+`timestamp` are required; `campaign_id`, `label` and `backend_model` are
+evaluation metadata and optional.
+
+```json
+{"post_id": "c1", "author_id": "a1", "timestamp": "2026-01-01T10:00:00Z", "text": "..."}
+```
+
+Exit codes suit pipelines: `0` nothing flagged, `1` coordination found, `2` bad
+input.
+
+With ground truth available, score the discovered clusters against the known
+campaigns rather than eyeballing them:
+
+```bash
+barbican evaluate -i labelled.jsonl -f json
+```
+
+`evaluate` refuses a corpus with no `campaign_id`, rather than reporting a
+number computed against nothing.
+
 ## What it does
 
+- **Operator CLI (`cli.py`).** `detect` and `evaluate` over a JSONL corpus —
+  the analyst-facing surface over the library below.
 - **Per-artifact baseline (`artifact.py`).** A deterministic single-surface
   detector: short-text lexical/statistical features plus two vendored scanner
   signals (invisible-text hits, AI-generation hits), combined by a linear
