@@ -27,26 +27,58 @@ from barbican import cli
 # Four posts pushing the same line, same author-style, minutes apart: the shape
 # a coordinated push actually has.
 COORDINATED = [
-    {"post_id": "c1", "author_id": "a1", "timestamp": "2026-01-01T10:00:00Z",
-     "text": "The new port authority ruling is a disaster for working families everywhere"},
-    {"post_id": "c2", "author_id": "a2", "timestamp": "2026-01-01T10:04:00Z",
-     "text": "The new port authority ruling is a disaster for working families across the state"},
-    {"post_id": "c3", "author_id": "a3", "timestamp": "2026-01-01T10:07:00Z",
-     "text": "This port authority ruling is a disaster for working families, plain and simple"},
-    {"post_id": "c4", "author_id": "a4", "timestamp": "2026-01-01T10:09:00Z",
-     "text": "The port authority ruling is a disaster for working families in every county"},
+    {
+        "post_id": "c1",
+        "author_id": "a1",
+        "timestamp": "2026-01-01T10:00:00Z",
+        "text": "The new port authority ruling is a disaster for working families everywhere",
+    },
+    {
+        "post_id": "c2",
+        "author_id": "a2",
+        "timestamp": "2026-01-01T10:04:00Z",
+        "text": "The new port authority ruling is a disaster for working families across the state",
+    },
+    {
+        "post_id": "c3",
+        "author_id": "a3",
+        "timestamp": "2026-01-01T10:07:00Z",
+        "text": "This port authority ruling is a disaster for working families, plain and simple",
+    },
+    {
+        "post_id": "c4",
+        "author_id": "a4",
+        "timestamp": "2026-01-01T10:09:00Z",
+        "text": "The port authority ruling is a disaster for working families in every county",
+    },
 ]
 
 # Unrelated people talking about unrelated things at unrelated times.
 ORGANIC = [
-    {"post_id": "o1", "author_id": "b1", "timestamp": "2026-01-01T04:11:00Z",
-     "text": "finally fixed the leaking radiator in the spare room, took all weekend"},
-    {"post_id": "o2", "author_id": "b2", "timestamp": "2026-01-02T19:40:00Z",
-     "text": "anyone know a decent thai place near the station? craving green curry"},
-    {"post_id": "o3", "author_id": "b3", "timestamp": "2026-01-03T08:02:00Z",
-     "text": "third straight loss. the defence needs rebuilding from scratch honestly"},
-    {"post_id": "o4", "author_id": "b4", "timestamp": "2026-01-04T22:15:00Z",
-     "text": "reading about deep sea vents tonight, the chemistry down there is wild"},
+    {
+        "post_id": "o1",
+        "author_id": "b1",
+        "timestamp": "2026-01-01T04:11:00Z",
+        "text": "finally fixed the leaking radiator in the spare room, took all weekend",
+    },
+    {
+        "post_id": "o2",
+        "author_id": "b2",
+        "timestamp": "2026-01-02T19:40:00Z",
+        "text": "anyone know a decent thai place near the station? craving green curry",
+    },
+    {
+        "post_id": "o3",
+        "author_id": "b3",
+        "timestamp": "2026-01-03T08:02:00Z",
+        "text": "third straight loss. the defence needs rebuilding from scratch honestly",
+    },
+    {
+        "post_id": "o4",
+        "author_id": "b4",
+        "timestamp": "2026-01-04T22:15:00Z",
+        "text": "reading about deep sea vents tonight, the chemistry down there is wild",
+    },
 ]
 
 
@@ -137,8 +169,17 @@ def test_tuning_a_threshold_changes_the_outcome(organic_file):
     """Proves the knob is wired, not decorative."""
     _, strict, _ = run(["detect", "-i", str(organic_file), "-f", "json"])
     _, loose, _ = run(
-        ["detect", "-i", str(organic_file), "-f", "json",
-         "--edge-threshold", "0.01", "--coord-threshold", "0.01"]
+        [
+            "detect",
+            "-i",
+            str(organic_file),
+            "-f",
+            "json",
+            "--edge-threshold",
+            "0.01",
+            "--coord-threshold",
+            "0.01",
+        ]
     )
     assert json.loads(strict)["flagged_clusters"] == []
     assert json.loads(loose)["flagged_clusters"] != []
@@ -176,9 +217,7 @@ def test_a_missing_input_file_is_reported_cleanly(tmp_path):
 def test_malformed_jsonl_is_reported_with_the_line_number(tmp_path):
     """Line 1 is deliberately valid, so the error can only come from line 2."""
     path = tmp_path / "bad.jsonl"
-    path.write_text(
-        json.dumps(COORDINATED[0]) + "\nnot json at all\n", encoding="utf-8"
-    )
+    path.write_text(json.dumps(COORDINATED[0]) + "\nnot json at all\n", encoding="utf-8")
     code, _, err = run(["detect", "-i", str(path)])
     assert code == 2
     # "line 2", not bare "2" -- the temp path is full of digits.

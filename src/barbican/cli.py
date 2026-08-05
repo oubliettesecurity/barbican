@@ -204,8 +204,11 @@ def cmd_evaluate(args: argparse.Namespace, out: IO[str], err: IO[str]) -> int:
             file=out,
         )
     else:
-        print(f"\nExamined {len(posts)} posts against "
-              f"{len(Dataset(posts).campaigns())} known campaign(s).", file=out)
+        print(
+            f"\nExamined {len(posts)} posts against "
+            f"{len(Dataset(posts).campaigns())} known campaign(s).",
+            file=out,
+        )
         for key in sorted(metrics):
             print(f"  {key:<24} {metrics[key]}", file=out)
     return EXIT_CLEAN
@@ -215,7 +218,9 @@ def _add_common(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("-i", "--input", required=True, help="JSONL file of posts")
     parser.add_argument("-f", "--format", choices=("text", "json"), default="text")
     parser.add_argument(
-        "--embed", choices=("none", "ollama"), default="none",
+        "--embed",
+        choices=("none", "ollama"),
+        default="none",
         help="embedding backend; 'none' (default) needs no network",
     )
     parser.add_argument("--embed-model", default="nomic-embed-text")
@@ -223,7 +228,9 @@ def _add_common(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--edge-threshold", type=float, default=CorrelatorConfig.edge_threshold)
     parser.add_argument("--coord-threshold", type=float, default=CorrelatorConfig.coord_threshold)
     parser.add_argument(
-        "--window", type=float, default=CorrelatorConfig.time_window_seconds,
+        "--window",
+        type=float,
+        default=CorrelatorConfig.time_window_seconds,
         help="temporal proximity window, seconds",
     )
 
@@ -244,12 +251,12 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common(p_detect)
     p_detect.set_defaults(func=cmd_detect)
 
-    p_eval = sub.add_parser(
-        "evaluate", help="score discovered clusters against known campaign_ids"
-    )
+    p_eval = sub.add_parser("evaluate", help="score discovered clusters against known campaign_ids")
     _add_common(p_eval)
     p_eval.add_argument(
-        "--overlap", type=float, default=0.5,
+        "--overlap",
+        type=float,
+        default=0.5,
         help="fraction of a campaign a cluster must cover to count as recovered",
     )
     p_eval.set_defaults(func=cmd_evaluate)
