@@ -35,6 +35,10 @@ packages = ["src/barbican"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "src/barbican/py.typed" = "barbican/py.typed"
+# The README tells a pip-install user to run the demo corpus, so it has to be in
+# the WHEEL -- an examples/ directory reaches only the sdist. Guarded by
+# tests/test_demo_corpus.py, which inspects the built artifact.
+"src/barbican/data/demo_corpus.jsonl" = "barbican/data/demo_corpus.jsonl"
 
 [tool.ruff]
 line-length = 100

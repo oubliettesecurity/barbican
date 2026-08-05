@@ -104,7 +104,9 @@ def build() -> list[dict[str, object]]:
 
 
 def main() -> int:
-    out = Path(__file__).parent / "demo_corpus.jsonl"
+    # Written into the package so it ships in the wheel: the README tells a
+    # pip-install user to run it, and an examples/ dir reaches only the sdist.
+    out = Path(__file__).resolve().parents[1] / "src" / "barbican" / "data" / "demo_corpus.jsonl"
     posts = build()
     out.write_text(
         "\n".join(json.dumps(p) for p in posts) + "\n",
