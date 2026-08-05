@@ -15,8 +15,14 @@ Point it at a file of posts and ask whether anything in it is coordinated:
 
 ```bash
 pip install oubliette-barbican
-barbican detect -i corpus.jsonl
+barbican detect -i examples/demo_corpus.jsonl
 ```
+
+A ready-made corpus ships in `examples/` so there is nothing to source first —
+21 posts, two constructed coordinated pushes and twelve organic controls. It is
+CC0 text written for the fixture, so it carries no licence encumbrance. See
+[`examples/README.md`](examples/README.md) for provenance and for what it does
+and does not demonstrate.
 
 ```
 Examined 7 posts (embeddings: none).
