@@ -15,24 +15,26 @@ Point it at a file of posts and ask whether anything in it is coordinated:
 
 ```bash
 pip install oubliette-barbican
-barbican detect -i examples/demo_corpus.jsonl
+barbican demo
 ```
 
-A ready-made corpus ships in `examples/` so there is nothing to source first —
+A ready-made corpus ships **inside the package**, so there is nothing to source
+first and nothing to clone —
 21 posts, two constructed coordinated pushes and twelve organic controls. It is
 CC0 text written for the fixture, so it carries no licence encumbrance. See
 [`examples/README.md`](examples/README.md) for provenance and for what it does
-and does not demonstrate.
+and does not demonstrate. Point `detect` at your own corpus the same way:
+`barbican detect -i your_posts.jsonl`.
 
 ```
-Examined 7 posts (embeddings: none).
+Examined 21 posts (embeddings: none).
 Thresholds: edge=0.6 coord=0.6 window=3600s
 
-1 coordinated cluster(s):
+2 coordinated cluster(s):
 
-  [1] 4 posts, score 0.795
-      c1         a1         2026-01-01T10:00:00Z
-                 The new port authority ruling is a disaster for working families ever...
+  [1] 5 posts, score 0.807
+      ferry-push-1 eastbank_1 2026-03-02T09:00:00Z
+                 The Rivermouth ferry closure is a disaster for working families on th...
       ...
 
 Score is coordination evidence, not proof of inauthenticity: quotation,

@@ -19,7 +19,8 @@ import pytest
 from barbican import cli
 
 EXAMPLES = Path(__file__).resolve().parent.parent / "examples"
-CORPUS = EXAMPLES / "demo_corpus.jsonl"
+REPO = Path(__file__).resolve().parent.parent
+CORPUS = REPO / "src" / "barbican" / "data" / "demo_corpus.jsonl"
 GENERATOR = EXAMPLES / "build_demo_corpus.py"
 
 
@@ -100,3 +101,37 @@ def test_examples_readme_states_the_limits(doc):
     text = (EXAMPLES / doc).read_text(encoding="utf-8").lower()
     assert "does not" in text
     assert "public domain" in text or "cc0" in text
+
+
+def test_the_corpus_resolves_from_the_installed_package():
+    """`barbican demo` must find it without knowing the repo layout."""
+    from barbican.cli import bundled_corpus
+
+    assert bundled_corpus().is_file(), "the bundled corpus is not importable"
+
+
+def test_demo_runs_against_the_bundled_corpus():
+    code, out, err = run(["demo", "-f", "json"])
+    assert code == 1, err
+    # `demo` prints a provenance banner before the report; parse from the JSON.
+    report = json.loads(out[out.index("{") :])
+    assert len(report["flagged_clusters"]) == 2
+
+
+def test_the_corpus_ships_in_the_built_wheel():
+    """The failure this file exists to prevent.
+
+    The README tells a `pip install` user to run the demo. An `examples/`
+    directory reaches only the sdist, so the corpus lived nowhere a wheel user
+    could reach it -- the command was documented and impossible. Config alone
+    would not have shown that; only looking inside the artifact does.
+    """
+    import zipfile
+
+    wheels = sorted((REPO / "dist").glob("*.whl"))
+    if not wheels:
+        pytest.skip("no built wheel in dist/ to inspect")
+    names = zipfile.ZipFile(wheels[-1]).namelist()
+    assert any(n.endswith("barbican/data/demo_corpus.jsonl") for n in names), (
+        f"demo corpus absent from {wheels[-1].name}; a pip-install user cannot run `barbican demo`"
+    )

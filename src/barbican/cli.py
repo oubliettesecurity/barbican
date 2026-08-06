@@ -53,6 +53,17 @@ def _zero_embedder(texts: list[str]) -> list[list[float]]:
     return [[0.0] for _ in texts]
 
 
+def bundled_corpus() -> Path:
+    """Path to the demo corpus shipped inside the package.
+
+    Resolved through importlib.resources rather than __file__ arithmetic so it
+    works from an installed wheel, not just a source checkout.
+    """
+    from importlib.resources import files
+
+    return Path(str(files("barbican").joinpath("data/demo_corpus.jsonl")))
+
+
 def load_posts(path: Path) -> list[Post]:
     """Read operator JSONL. Strict about structure, quiet about extra keys."""
     if not path.is_file():
@@ -176,6 +187,24 @@ def cmd_detect(args: argparse.Namespace, out: IO[str], err: IO[str]) -> int:
     return EXIT_FOUND if flagged else EXIT_CLEAN
 
 
+def cmd_demo(args: argparse.Namespace, out: IO[str], err: IO[str]) -> int:
+    """Run detect against the corpus bundled with the package."""
+    corpus = bundled_corpus()
+    if not corpus.is_file():  # pragma: no cover - packaging failure
+        raise CLIError(
+            f"the bundled demo corpus is missing from this install ({corpus}). "
+            f"This is a packaging fault, not a usage error."
+        )
+    print(f"Demo corpus: {corpus.name} (bundled, CC0)", file=out)
+    print(
+        "Constructed fixture -- shows that coordinated pushes separate from "
+        "organic conversation, NOT real-world detection performance.",
+        file=out,
+    )
+    args.input = str(corpus)
+    return cmd_detect(args, out, err)
+
+
 def cmd_evaluate(args: argparse.Namespace, out: IO[str], err: IO[str]) -> int:
     from .experiment import campaign_metrics_discovery
 
@@ -260,6 +289,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="fraction of a campaign a cluster must cover to count as recovered",
     )
     p_eval.set_defaults(func=cmd_evaluate)
+
+    p_demo = sub.add_parser("demo", help="run detect against the corpus bundled with the package")
+    p_demo.add_argument("-f", "--format", choices=("text", "json"), default="text")
+    p_demo.add_argument("--embed", choices=("none", "ollama"), default="none")
+    p_demo.add_argument("--embed-model", default="nomic-embed-text")
+    p_demo.add_argument("--embed-host", default="127.0.0.1:11434")
+    p_demo.add_argument("--edge-threshold", type=float, default=CorrelatorConfig.edge_threshold)
+    p_demo.add_argument("--coord-threshold", type=float, default=CorrelatorConfig.coord_threshold)
+    p_demo.add_argument("--window", type=float, default=CorrelatorConfig.time_window_seconds)
+    p_demo.set_defaults(func=cmd_demo)
 
     p_version = sub.add_parser("version", help="show the installed version")
     p_version.set_defaults(func=lambda a, o, e: _print_version(o))
