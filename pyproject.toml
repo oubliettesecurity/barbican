@@ -40,6 +40,13 @@ packages = ["src/barbican"]
 # tests/test_demo_corpus.py, which inspects the built artifact.
 "src/barbican/data/demo_corpus.jsonl" = "barbican/data/demo_corpus.jsonl"
 
+# sdist: the package sources only. Hatch adds pyproject.toml, README.md,
+# PKG-INFO and the VCS .gitignore on its own. Without this, the sdist also
+# sweeps in tests/, examples/ and .github/, as the published 0.1.0 sdist did.
+# Enforced by tests/test_packaging_boundary.py.
+[tool.hatch.build.targets.sdist]
+only-include = ["src/barbican"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"
