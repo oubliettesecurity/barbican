@@ -8,6 +8,9 @@ eval-only corpus generator that imports it are deliberately NOT part of this
 package.
 """
 
+# Must equal [project].version in pyproject.toml (tests/test_version_sync.py).
+__version__ = "0.1.0"
+
 from .artifact import BaselineDetector, extract_features
 from .correlator import Cluster, CorrelatorConfig, discover
 from .embed import EmbeddingFn, OllamaEmbedder, cosine
@@ -21,6 +24,7 @@ from .realworld import load_realworld
 from .types import Dataset, Post
 
 __all__ = [
+    "__version__",
     "Post",
     "Dataset",
     "extract_features",
