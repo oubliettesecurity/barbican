@@ -1,6 +1,6 @@
 [build-system]
-# hatchling 1.27 is the first release with PEP 639 support (SPDX `license`
-# expression + `license-files`).
+# hatchling 1.27 is the first release that emits core metadata 2.4 by default,
+# the version that carries PEP 639's License-Expression and License-File fields.
 requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
