@@ -1,5 +1,7 @@
 [build-system]
-requires = ["hatchling"]
+# hatchling 1.27 is the first release with PEP 639 support (SPDX `license`
+# expression + `license-files`).
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
@@ -8,7 +10,8 @@ version = "0.1.0"
 description = "Defensive detection of coordinated synthetic influence-operation content (public twin of SPECTRE)."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "Proprietary" }
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "Oubliette Security LLC" }]
 keywords = ["security", "influence-operations", "detection", "coordination", "synthetic-content"]
 classifiers = [
@@ -41,8 +44,9 @@ packages = ["src/barbican"]
 "src/barbican/data/demo_corpus.jsonl" = "barbican/data/demo_corpus.jsonl"
 
 # sdist: the package sources only. Hatch adds pyproject.toml, README.md,
-# PKG-INFO and the VCS .gitignore on its own. Without this, the sdist also
-# sweeps in tests/, examples/ and .github/, as the published 0.1.0 sdist did.
+# PKG-INFO, the license-files (LICENSE, NOTICE) and the VCS .gitignore on its
+# own. Without this, the sdist also sweeps in tests/, examples/ and .github/,
+# as the published 0.1.0 sdist did.
 # Enforced by tests/test_packaging_boundary.py.
 [tool.hatch.build.targets.sdist]
 only-include = ["src/barbican"]

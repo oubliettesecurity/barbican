@@ -126,3 +126,9 @@ ruff check src/
 ruff format --check src/
 mypy --strict src/
 ```
+
+## License
+
+Apache-2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+
+Copyright 2026 Oubliette Security LLC.

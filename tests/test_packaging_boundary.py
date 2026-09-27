@@ -5,6 +5,9 @@ repo also holds things that have no place in it: ``tests/``, ``examples/``,
 CI config and any local ``.env`` or key material. The offensive twin
 (SPECTRE) never lives in this repo; ``spectre`` in any artifact path fails.
 
+The Apache-2.0 ``LICENSE`` and ``NOTICE`` must ship in both artifacts: a
+redistributed wheel or sdist without them does not carry the licence terms.
+
 This is an allowlist check: anything outside the expected layout fails.
 This module deliberately imports nothing from ``barbican`` so the publish
 workflow can run it with ``--noconftest`` in a venv that has only build
@@ -44,7 +47,8 @@ FORBIDDEN_FRAGMENTS = (
 FORBIDDEN_BASENAMES = re.compile(
     r"(^|/)(\.env(\..*)?|.*\.pem|.*\.key|id_rsa.*|.*\.sqlite3?|.*\.db)$"
 )
-SDIST_ALLOWED_TOP = {"README.md", "pyproject.toml", "PKG-INFO", ".gitignore"}
+LICENSE_FILES = ("LICENSE", "NOTICE")
+SDIST_ALLOWED_TOP = {"README.md", "pyproject.toml", "PKG-INFO", ".gitignore", *LICENSE_FILES}
 
 
 def _dist_artifacts() -> tuple[list[Path], list[Path]]:
@@ -79,6 +83,15 @@ def test_hatch_config_only_ships_the_package() -> None:
     assert targets["sdist"]["only-include"] == [f"src/{PACKAGE}"], targets["sdist"]
 
 
+def test_license_metadata_is_apache_2() -> None:
+    with (REPO_ROOT / "pyproject.toml").open("rb") as fh:
+        project = tomllib.load(fh)["project"]
+    assert project["license"] == "Apache-2.0", project["license"]
+    assert project["license-files"] == list(LICENSE_FILES), project["license-files"]
+    for name in LICENSE_FILES:
+        assert (REPO_ROOT / name).is_file(), f"{name} missing from the repo root"
+
+
 def test_wheel_contains_only_the_package() -> None:
     wheels, _ = _dist_artifacts()
     _require_or_skip(wheels, "wheel")
@@ -90,6 +103,10 @@ def test_wheel_contains_only_the_package() -> None:
         outside = [n for n in names if not (n.startswith(PACKAGE + "/") or dist_info.match(n))]
         bad = sorted(set(outside + _generic_offenders(names)))
         assert any(n.startswith(PACKAGE + "/") for n in names), f"{whl.name} has no package files"
+        for lic in LICENSE_FILES:
+            assert any(
+                dist_info.match(n) and n.endswith(f".dist-info/licenses/{lic}") for n in names
+            ), f"{whl.name} does not ship {lic}"
         if bad:
             offenders[whl.name] = bad
     assert not offenders, f"wheel contains files outside {PACKAGE}/: {offenders}"
@@ -102,6 +119,9 @@ def test_sdist_contains_only_expected_files() -> None:
     for sd in sdists:
         with tarfile.open(sd) as tf:
             members = [m.name for m in tf.getmembers() if m.isfile()]
+        rels = {name.partition("/")[2] for name in members}
+        for lic in LICENSE_FILES:
+            assert lic in rels, f"{sd.name} does not ship {lic}"
         bad = []
         for name in members:
             _, _, rel = name.partition("/")  # strip "<name>-<version>/"
