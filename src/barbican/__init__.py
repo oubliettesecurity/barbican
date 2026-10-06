@@ -9,7 +9,7 @@ package.
 """
 
 # Must equal [project].version in pyproject.toml (tests/test_version_sync.py).
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from .artifact import BaselineDetector, extract_features
 from .correlator import Cluster, CorrelatorConfig, discover

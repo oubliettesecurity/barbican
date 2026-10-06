@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "oubliette-barbican"
-version = "0.1.0"
+version = "0.1.1"
 description = "Defensive detection of coordinated synthetic influence-operation content (public twin of SPECTRE)."
 readme = "README.md"
 requires-python = ">=3.11"
